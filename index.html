@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Eats - King County Restaurant Ratings</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="sidebar">
+        <h1>Clean Eats</h1>
+        <p class="subtitle">King County Restaurant Safety Ratings</p>
+
+        <div class="filters">
+            <input type="text" id="search" placeholder="Search restaurant name...">
+
+            <select id="city-filter">
+                <option value="">All Cities</option>
+            </select>
+
+            <select id="grade-filter">
+                <option value="">All Ratings</option>
+                <option value="1">Excellent</option>
+                <option value="2">Good</option>
+                <option value="3">Okay</option>
+                <option value="4">Needs Improvement</option>
+            </select>
+
+            <div class="clean-eats-toggle">
+                <label class="toggle-label">
+                    <input type="checkbox" id="clean-only">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Clean Eats Only</span>
+                </label>
+                <span class="toggle-hint">Show only Excellent-rated restaurants</span>
+            </div>
+
+            <button id="search-btn">Search</button>
+        </div>
+
+        <div id="legend">
+            <span class="legend-item"><span class="dot dot-1"></span> Excellent</span>
+            <span class="legend-item"><span class="dot dot-2"></span> Good</span>
+            <span class="legend-item"><span class="dot dot-3"></span> Okay</span>
+            <span class="legend-item"><span class="dot dot-4"></span> Needs Improvement</span>
+        </div>
+
+        <div id="results">
+            <p class="placeholder">Search for restaurants to see results</p>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Inspection history panel -->
+    <div id="detail-panel" class="hidden">
+        <button id="detail-close">&times;</button>
+        <div id="detail-content"></div>
+    </div>
+
+    <script src="app.js"></script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDeGJACjtkBg8KUVZ3kg3s8h-T5w0iRTlU&callback=initMap">
+    </script>
+</body>
+</html>
