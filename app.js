@@ -14,6 +14,7 @@ const GRADE_COLORS = {
 
 let map;
 let markers = [];
+let markerCluster = null;
 let infoWindow;
 let allRestaurants = [];
 
@@ -101,9 +102,9 @@ async function doSearch() {
     const grade = cleanOnly ? "1" : document.getElementById("grade-filter").value;
 
     const conditions = [];
-    if (name) conditions.push(`upper(name) like '%${name.toUpperCase().replace(/'/g, "''")}%'`);
-    if (city) conditions.push(`city='${city}'`);
-    if (grade) conditions.push(`grade='${grade}'`);
+    if (name) conditions.push(`upper(name) like '%${sanitizeSoQL(name.toUpperCase())}%'`);
+    if (city) conditions.push(`city='${sanitizeSoQL(city)}'`);
+    if (grade) conditions.push(`grade='${sanitizeSoQL(grade)}'`);
 
     if (conditions.length === 0) {
         conditions.push("city='SEATTLE'");
@@ -172,6 +173,10 @@ function displayResults(restaurants) {
 function displayMarkers(restaurants) {
     markers.forEach(m => m.setMap(null));
     markers = [];
+    if (markerCluster) {
+        markerCluster.clearMarkers();
+        markerCluster = null;
+    }
 
     const bounds = new google.maps.LatLngBounds();
 
@@ -223,17 +228,42 @@ function displayMarkers(restaurants) {
         bounds.extend(marker.getPosition());
     });
 
+    // Cluster markers for performance
+    if (markers.length > 0 && typeof markerClusterer !== "undefined") {
+        markerCluster = new markerClusterer.MarkerClusterer({
+            map,
+            markers,
+            renderer: {
+                render({ count, position }) {
+                    return new google.maps.Marker({
+                        position,
+                        label: {
+                            text: String(count),
+                            color: "#fff",
+                            fontSize: "12px",
+                            fontWeight: "bold"
+                        },
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            fillColor: "#4ecca3",
+                            fillOpacity: 0.8,
+                            strokeColor: "#fff",
+                            strokeWeight: 2,
+                            scale: Math.min(20, 10 + Math.log2(count) * 3)
+                        }
+                    });
+                }
+            }
+        });
+    }
+
     if (markers.length > 0) {
         // Calculate the center of all markers, weighted toward the cluster
         const lats = markers.map(m => m.getPosition().lat());
         const lngs = markers.map(m => m.getPosition().lng());
 
-        // Use median to ignore outliers
         lats.sort((a, b) => a - b);
         lngs.sort((a, b) => a - b);
-        const midIdx = Math.floor(lats.length / 2);
-        const medianLat = lats[midIdx];
-        const medianLng = lngs[midIdx];
 
         // Build bounds from the middle 90% of markers to ignore outliers
         const trim = Math.floor(markers.length * 0.05);
@@ -263,7 +293,7 @@ async function showHistory(businessId, name, address, city) {
     panel.classList.remove("hidden");
     content.innerHTML = '<p class="loading">Loading inspection history...</p>';
 
-    const url = `${API_BASE}?$where=business_id='${businessId}'&$order=inspection_date DESC&$limit=1000`;
+    const url = `${API_BASE}?$where=business_id='${sanitizeSoQL(businessId)}'&$order=inspection_date DESC&$limit=1000`;
 
     try {
         const res = await fetch(url);
@@ -374,7 +404,11 @@ function focusMarker(index) {
 }
 
 function titleCase(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function sanitizeSoQL(str) {
+    return str.replace(/'/g, "''").replace(/[\\%;]/g, "");
 }
 
 function escapeHtml(str) {
