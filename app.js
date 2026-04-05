@@ -178,8 +178,6 @@ function displayMarkers(restaurants) {
         markerCluster = null;
     }
 
-    const bounds = new google.maps.LatLngBounds();
-
     restaurants.forEach(r => {
         const lat = parseFloat(r.latitude);
         const lng = parseFloat(r.longitude);
@@ -225,7 +223,6 @@ function displayMarkers(restaurants) {
         });
 
         markers.push(marker);
-        bounds.extend(marker.getPosition());
     });
 
     // Cluster markers for performance
@@ -275,7 +272,11 @@ function displayMarkers(restaurants) {
             { lat: coreLats[coreLats.length - 1], lng: coreLngs[coreLngs.length - 1] }
         );
 
-        map.fitBounds(coreBounds, { left: 400, top: 50, right: 50, bottom: 50 });
+        const isMobile = window.innerWidth <= 768;
+        const padding = isMobile
+            ? { top: 20, right: 20, bottom: 20, left: 20 }
+            : { left: 400, top: 50, right: 50, bottom: 50 };
+        map.fitBounds(coreBounds, padding);
 
         google.maps.event.addListenerOnce(map, "idle", () => {
             if (map.getZoom() > 16) map.setZoom(16);
